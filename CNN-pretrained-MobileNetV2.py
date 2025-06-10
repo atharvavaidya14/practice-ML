@@ -5,11 +5,14 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as ds
 
-(og_train, og_validation, og_test), metadata = ds.load('cats_vs_dogs',
-                                                       split=['train[:80%]', 'train[80%:90%]', 'train[90%:]'],
-                                                       with_info=True, as_supervised=True)
+(og_train, og_validation, og_test), metadata = ds.load(
+    "cats_vs_dogs",
+    split=["train[:80%]", "train[80%:90%]", "train[90%:]"],
+    with_info=True,
+    as_supervised=True,
+)
 
-label_name = metadata.features['label'].int2str  # function object to get labels
+label_name = metadata.features["label"].int2str  # function object to get labels
 print(type(label_name))
 # for img, label in og_train.take(2):
 #     plt.figure()
@@ -22,13 +25,17 @@ size = 160
 
 
 def format_img(image, label):
-    image = tf.cast(image, tf.float32)  # Casts all values in the image to float32. they can be integers
+    image = tf.cast(
+        image, tf.float32
+    )  # Casts all values in the image to float32. they can be integers
     image = (image / 127.5) - 1  # 255/2
     image = tf.image.resize(image, (size, size))
     return image, label
 
 
-train = og_train.map(format_img)  # map applies the function in the () to every example in og_train
+train = og_train.map(
+    format_img
+)  # map applies the function in the () to every example in og_train
 validation = og_validation.map(format_img)
 test = og_test.map(format_img)
 
@@ -48,7 +55,9 @@ validation_batches = validation.batch(batch_size)
 test_batches = test.batch(batch_size)
 # Using a pre-trained CNN- MobileNet V2
 
-model = tf.keras.applications.MobileNetV2(input_shape=(size, size, 3), include_top=False, weights='imagenet')
+model = tf.keras.applications.MobileNetV2(
+    input_shape=(size, size, 3), include_top=False, weights="imagenet"
+)
 
 # include_top specifies whether to include the classifier of this CNN. we want to retrain this CNN only on cats snd dogs
 # So just two classes
@@ -74,14 +83,16 @@ model.summary()
 
 # Training the model
 alpha = 0.0001  # learning rate
-final_model.compile(optimizer=tf.keras.optimizers.RMSprop(lr=alpha),
-              loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
-              metrics=['accuracy'])
+final_model.compile(
+    optimizer=tf.keras.optimizers.RMSprop(lr=alpha),
+    loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
+    metrics=["accuracy"],
+)
 # Training the model on the cats vs dogs images
 history = final_model.fit(train_batches, epochs=3, validation_data=validation_batches)
-accuracy = history.history['accuracy']
+accuracy = history.history["accuracy"]
 print(accuracy)
 
 final_model.save("cats_vs_dogs.h5")  # keras specific extension
 
-new_model = tf.keras.models.load_model('cats_vs_dogs.h5')
+new_model = tf.keras.models.load_model("cats_vs_dogs.h5")
